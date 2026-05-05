@@ -1,0 +1,92 @@
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+from core.model import BaseModel
+
+class User(AbstractUser, BaseModel):
+    ROLE_CHOICES = (
+        ('HOSPITAL_ADMIN', 'Hospital Admin'),
+        ('HOSPITAL_STAFF', 'Hospital Staff'),
+        ('BLOODBANK_ADMIN', 'Bloodbank Admin'),
+        ('BLOODBANK_STAFF', 'Bloodbank Staff'),
+        ('PUBLIC_USER', 'Public User'),
+        ('DISPATCH_RIDER', 'Dispatch Rider'),
+        ('INTERNAL_ADMIN', 'Internal Admin'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PUBLIC_USER')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
+    
+    otp = models.CharField(max_length=10, blank=True, null=True)
+    otp_expiry = models.DateTimeField(blank=True, null=True)
+    must_change_password = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.username
+
+class UserOTP(BaseModel):
+    PURPOSE_CHOICES = (
+        ('VERIFICATION', 'Email/Phone Verification'),
+        ('PASSWORD_RESET', 'Password Reset'),
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='otps')
+    otp = models.CharField(max_length=6)
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='VERIFICATION')
+    is_used = models.BooleanField(default=False)
+    expiry = models.DateTimeField()
+
+    def __str__(self):
+        return f"{self.user.username} - {self.otp} ({self.purpose})"
+
+class BaseOrganization(BaseModel):
+    name = models.CharField(max_length=255)
+    address = models.TextField(blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    lga = models.CharField(max_length=100, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    
+    # Contact & KYC
+    contact_email = models.EmailField(blank=True, null=True)
+    contact_phone = models.CharField(max_length=20, blank=True, null=True)
+    kyc_document = models.FileField(upload_to='kyc_docs/', blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.name
+
+class Hospital(BaseOrganization):
+    hospital_type = models.CharField(max_length=100, blank=True, null=True) # e.g. General, Private
+    has_emergency_unit = models.BooleanField(default=True)
+
+class BloodBank(BaseOrganization):
+    license_number = models.CharField(max_length=100, blank=True, null=True)
+    storage_capacity_liters = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+
+class UserProfile(BaseModel):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    hospital = models.ForeignKey(Hospital, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff')
+    blood_bank = models.ForeignKey(BloodBank, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff')
+    
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.hospital and self.user.role in ['HOSPITAL_STAFF', 'HOSPITAL_ADMIN']:
+            staff_count = UserProfile.objects.filter(hospital=self.hospital).exclude(id=self.id).count()
+            if staff_count >= 10: # Increased limit for hospital
+                raise ValidationError("This hospital has reached the maximum staff limit.")
+        
+        if self.blood_bank and self.user.role in ['BLOODBANK_STAFF', 'BLOODBANK_ADMIN']:
+            staff_count = UserProfile.objects.filter(blood_bank=self.blood_bank).exclude(id=self.id).count()
+            if staff_count >= 5:
+                raise ValidationError("This blood bank has reached the maximum staff limit.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
