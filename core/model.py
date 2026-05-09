@@ -93,6 +93,14 @@ class BaseModel(models.Model, DictUpdateMixin):
     archived = models.DateTimeField(blank=True, null=True, editable=False)
     last_modified = models.DateTimeField(auto_now=True)
     date_created = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'users.User',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='created_%(class)ss',
+        editable=False,
+    )
     objects = BaseModelManager()
     super_objects = models.Manager()
 

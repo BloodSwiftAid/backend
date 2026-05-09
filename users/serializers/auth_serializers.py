@@ -25,6 +25,16 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             if not user.is_active:
                 raise serializers.ValidationError("User is inactive.")
             
+            # Check facility status
+            profile = getattr(user, 'profile', None)
+            facility_verified = True
+            if profile:
+                facility = profile.hospital or profile.blood_bank
+                if facility:
+                    if not facility.is_active:
+                        raise serializers.ValidationError("Facility is not active, contact admin")
+                    facility_verified = facility.is_verified
+
             # SimpleJWT's super().validate expects the credentials in attrs to work with authenticate()
             # Since we already authenticated, we can manually set the user
             self.user = user
@@ -37,6 +47,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             data['username'] = user.username
             data['email'] = user.email
             data['must_change_password'] = user.must_change_password
+            data['facility_verified'] = facility_verified
             return data
         
         raise serializers.ValidationError("No active account found with the given credentials")

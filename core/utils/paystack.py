@@ -59,3 +59,33 @@ class PaystackProvider:
             "blood_bank_fee": round(blood_bank_fee, 2),
             "commission_percentage": commission_pct
         }
+
+    def create_transfer_recipient(self, name, account_number, bank_code):
+        """
+        Create a transfer recipient on Paystack
+        """
+        url = f"{self.base_url}/transferrecipient"
+        payload = {
+            "type": "nuban",
+            "name": name,
+            "account_number": account_number,
+            "bank_code": bank_code,
+            "currency": "NGN"
+        }
+        response = requests.post(url, json=payload, headers=self.headers)
+        return response.json()
+
+    def initiate_transfer(self, amount, recipient_code, reference, reason="SwiftAid Payout"):
+        """
+        Initiate a transfer from Paystack balance to a recipient
+        """
+        url = f"{self.base_url}/transfer"
+        payload = {
+            "source": "balance",
+            "amount": int(float(amount) * 100),
+            "recipient": recipient_code,
+            "reference": reference,
+            "reason": reason
+        }
+        response = requests.post(url, json=payload, headers=self.headers)
+        return response.json()

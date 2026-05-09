@@ -34,7 +34,10 @@ class Inventory(BaseModel):
     expiry_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.blood_bank.name if self.blood_bank else 'System'} - {self.blood_type.group} - {self.quantity}"
+        bank = self.blood_bank.name if self.blood_bank else 'System'
+        btype = self.blood_type.group if self.blood_type else 'Unknown'
+        product = self.product.blood_group if self.product else '—'
+        return f"{bank} - {btype} / {product} - qty:{self.quantity}"
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

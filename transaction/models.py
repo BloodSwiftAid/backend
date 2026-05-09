@@ -31,6 +31,7 @@ class BloodRequest(BaseModel):
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='MARKETPLACE')
+    batch_id = models.CharField(max_length=100, blank=True, null=True, help_text="Groups multiple requests in one marketplace session")
     
     # Fees & Pricing
     blood_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
@@ -46,4 +47,5 @@ class BloodRequest(BaseModel):
 
     
     def __str__(self):
-        return f"Request {self.id} - {self.product} from {self.blood_bank.name}"
+        bank_name = self.blood_bank.name if self.blood_bank else "Unassigned"
+        return f"Request {self.id} - {self.product} from {bank_name}"

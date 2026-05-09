@@ -8,6 +8,7 @@ from rest_framework import status
 from django.db import transaction, models
 from inventory.models import Inventory
 
+import uuid
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 @extend_schema_view(
@@ -40,6 +41,40 @@ class BloodRequestViewSet(viewsets.ModelViewSet):
         elif user.role == 'INTERNAL_ADMIN':
             return BloodRequest.objects.all()
         return BloodRequest.objects.none()
+    
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    @transaction.atomic
+    def bulk_create(self, request):
+        user = request.user
+        profile = getattr(user, 'profile', None)
+        if not (profile and profile.hospital):
+            return Response({"message": "Only hospitals can perform marketplace orders."}, status=status.HTTP_403_FORBIDDEN)
+
+        items = request.data.get('items', [])
+        batch_id = request.data.get('batch_id') or str(uuid.uuid4())
+        
+        if not items:
+            return Response({"message": "No items provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        blood_requests = []
+        for item_data in items:
+            serializer = self.get_serializer(data=item_data)
+            serializer.is_valid(raise_exception=True)
+            blood_request = serializer.save(
+                requester_user=user,
+                requester_hospital=profile.hospital,
+                batch_id=batch_id,
+                source='MARKETPLACE',
+                status='PENDING'
+            )
+            blood_requests.append(blood_request)
+
+        return Response({
+            "message": "Bulk request created successfully.",
+            "batch_id": batch_id,
+            "master_request_id": blood_requests[0].id,
+            "requests": BloodRequestSerializer(blood_requests, many=True).data
+        }, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -73,39 +108,58 @@ class BloodRequestViewSet(viewsets.ModelViewSet):
         blood_request.save()
         return Response({"message": "Request rejected."})
 
-    @action(detail=False, methods=['post'], url_path='pos-sale')
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'], url_path='bulk-pos-sale')
     @transaction.atomic
-    def direct_pos_sale(self, request):
+    def bulk_pos_sale(self, request):
         user = request.user
         profile = getattr(user, 'profile', None)
         if not (profile and profile.blood_bank):
             return Response({"message": "Only blood bank staff can perform POS sales."}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        items = request.data.get('items', [])
+        if not items:
+            return Response({"message": "No items provided for sale."}, status=status.HTTP_400_BAD_REQUEST)
+
+        total_amount = 0
+        blood_requests = []
         
-        # Create the request as fulfilled immediately
-        blood_request = serializer.save(
-            blood_bank=profile.blood_bank,
-            status='DELIVERED',
-            source='POS'
-        )
+        for item_data in items:
+            serializer = self.get_serializer(data=item_data)
+            serializer.is_valid(raise_exception=True)
+            
+            # Create the request
+            blood_request = serializer.save(
+                blood_bank=profile.blood_bank,
+                status='DELIVERED',
+                source='POS'
+            )
+            
+            # Deduct inventory
+            inventory = Inventory.objects.filter(
+                blood_bank=profile.blood_bank,
+                product=blood_request.product
+            ).first()
 
-        # Deduct inventory
-        inventory = Inventory.objects.filter(
-            blood_bank=profile.blood_bank,
-            product=blood_request.product
-        ).first()
+            if not inventory or inventory.quantity < blood_request.quantity:
+                transaction.set_rollback(True)
+                return Response({"message": f"Insufficient inventory for {blood_request.product}."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            inventory.quantity -= blood_request.quantity
+            inventory.save()
+            
+            total_amount += float(blood_request.total_amount)
+            blood_requests.append(blood_request)
 
-        if not inventory or inventory.quantity < blood_request.quantity:
-            # Rollback transaction
-            transaction.set_rollback(True)
-            return Response({"message": "Insufficient inventory for this sale."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        inventory.quantity -= blood_request.quantity
-        inventory.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # Return the ID of the first request as the "Master" for payment initialization
+        # The payment initialization will use the total amount provided by the frontend
+        return Response({
+            "message": "Bulk sale created successfully.",
+            "master_request_id": blood_requests[0].id,
+            "total_amount": total_amount,
+            "item_count": len(blood_requests)
+        }, status=status.HTTP_201_CREATED)
 
 class RevenueStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]

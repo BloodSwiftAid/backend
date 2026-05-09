@@ -1,4 +1,9 @@
-from rest_framework import viewsets, permissions as drf_permissions
+from rest_framework import viewsets, permissions as drf_permissions, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from django.db import transaction
+from django.conf import settings
 from ..models import User, Hospital, BloodBank, UserProfile, GlobalConfig
 from ..serializers.user_serializers import (
     UserSerializer, 
@@ -7,7 +12,9 @@ from ..serializers.user_serializers import (
     UserProfileSerializer,
     GlobalConfigSerializer
 )
-from rest_framework.views import APIView
+from ..permissions import IsInternalAdmin
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from core.mail import send_templated_email
 
 class GlobalConfigView(APIView):
     permission_classes = [drf_permissions.IsAuthenticated]
@@ -44,13 +51,6 @@ class MeView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-from ..permissions import IsInternalAdmin
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework import status
-from django.db import transaction
-
-from drf_spectacular.utils import extend_schema, extend_schema_view
 
 @extend_schema_view(
     list=extend_schema(tags=['Users']),
@@ -67,9 +67,6 @@ class UserViewSet(viewsets.ModelViewSet):
         
         # If internal admin creates a facility admin, send onboarding email
         if user.role in ['BLOODBANK_ADMIN', 'HOSPITAL_ADMIN']:
-            from core.mail import send_templated_email
-            from django.conf import settings
-            
             send_templated_email(
                 recipient=user.email,
                 subject="Welcome to the Network - SwiftAid Onboarding",
@@ -90,6 +87,22 @@ class HospitalViewSet(viewsets.ModelViewSet):
     serializer_class = HospitalSerializer
     permission_classes = [drf_permissions.IsAuthenticated, IsInternalAdmin]
 
+    @action(detail=True, methods=['post'], url_path='toggle-active')
+    def toggle_active(self, request, pk=None):
+        hospital = self.get_object()
+        hospital.is_active = not hospital.is_active
+        hospital.save()
+        state = 'activated' if hospital.is_active else 'deactivated'
+        return Response({'message': f'Hospital {state} successfully.', 'is_active': hospital.is_active})
+
+    @action(detail=True, methods=['post'], url_path='toggle-verified')
+    def toggle_verified(self, request, pk=None):
+        hospital = self.get_object()
+        hospital.is_verified = not hospital.is_verified
+        hospital.save()
+        state = 'verified' if hospital.is_verified else 'unverified'
+        return Response({'message': f'Hospital {state} successfully.', 'is_verified': hospital.is_verified})
+
 @extend_schema_view(
     list=extend_schema(tags=['Blood Banks']),
     retrieve=extend_schema(tags=['Blood Banks']),
@@ -98,6 +111,22 @@ class BloodBankViewSet(viewsets.ModelViewSet):
     queryset = BloodBank.objects.all()
     serializer_class = BloodBankSerializer
     permission_classes = [drf_permissions.IsAuthenticated, IsInternalAdmin]
+
+    @action(detail=True, methods=['post'], url_path='toggle-active')
+    def toggle_active(self, request, pk=None):
+        bank = self.get_object()
+        bank.is_active = not bank.is_active
+        bank.save()
+        state = 'activated' if bank.is_active else 'deactivated'
+        return Response({'message': f'Blood bank {state} successfully.', 'is_active': bank.is_active})
+
+    @action(detail=True, methods=['post'], url_path='toggle-verified')
+    def toggle_verified(self, request, pk=None):
+        bank = self.get_object()
+        bank.is_verified = not bank.is_verified
+        bank.save()
+        state = 'verified' if bank.is_verified else 'unverified'
+        return Response({'message': f'Blood bank {state} successfully.', 'is_verified': bank.is_verified})
 
 @extend_schema_view(
     list=extend_schema(tags=['Profiles']),
@@ -117,6 +146,9 @@ class StaffManagementViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if user.role == 'INTERNAL_ADMIN':
+            return User.objects.all()
+            
         profile = getattr(user, 'profile', None)
         if not profile:
             return User.objects.none()
@@ -126,8 +158,6 @@ class StaffManagementViewSet(viewsets.ModelViewSet):
             return User.objects.filter(profile__blood_bank=profile.blood_bank)
         elif user.role == 'HOSPITAL_ADMIN' and profile.hospital:
             return User.objects.filter(profile__hospital=profile.hospital)
-        elif user.role == 'INTERNAL_ADMIN':
-            return User.objects.all()
         return User.objects.none()
 
     @transaction.atomic
@@ -153,10 +183,6 @@ class StaffManagementViewSet(viewsets.ModelViewSet):
             staff_user.save()
             UserProfile.objects.create(user=staff_user, hospital=admin_profile.hospital)
             facility_name = admin_profile.hospital.name
-        
-        # Send email
-        from core.mail import send_templated_email
-        from django.conf import settings
         
         send_templated_email(
             recipient=staff_user.email,

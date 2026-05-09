@@ -102,6 +102,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (REST_FRAMEWORK_DEFAULT_AUTH),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
+        "users.permissions.IsFacilityVerified",
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
@@ -448,4 +449,4 @@ OTP_LENGTH = 6
 GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
 
 # Frontend Settings
-FRONTEND_BASE_URL = config("FRONTEND_BASE_URL", default="http://localhost:5173")
+FRONTEND_BASE_URL = config("FRONTEND_BASE_URL", default="http://localhost:3000")

@@ -79,10 +79,22 @@ class ChangePasswordView(APIView):
         
         user = request.user
         if user.check_password(serializer.validated_data['old_password']):
+            was_first_login = user.must_change_password  # Capture before clearing
+
             user.set_password(serializer.validated_data['new_password'])
             user.must_change_password = False
+
+            # Mark the user as verified once they accept the invite
+            # and set their own password for the first time.
+            # Facility is_verified is managed independently by internal admins.
+            if was_first_login:
+                user.is_verified = True
+
             user.save()
-            return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
+
+            return Response({
+                "message": "Password changed successfully.",
+            }, status=status.HTTP_200_OK)
         
         from rest_framework.exceptions import ValidationError
         raise ValidationError("Incorrect old password.")
