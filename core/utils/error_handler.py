@@ -1,6 +1,8 @@
 from rest_framework import status, serializers
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
+from rest_framework.views import exception_handler
+
 
 
 def error_400(message):
@@ -69,14 +71,69 @@ def serializer_error_400(
 #     )
 
 
-def serializer_errors(default_errors):
-    error_messages = ""
-    for field_name, field_errors in default_errors.items():
-        if field_errors[0].code == "unique":
-            error_messages += f"{field_name} already exists, "
-        else:
-            error_messages += f"{field_name} is {field_errors[0].code}, "
     return error_messages
+
+
+def custom_exception_handler(exc, context):
+    """
+    Unified error handler that returns errors in a consistent format:
+    {
+        "status_code": <int>,
+        "message": <string>
+    }
+    """
+    # Call DRF's default exception handler first to get the standard error response
+    response = exception_handler(exc, context)
+
+    if response is not None:
+        data = response.data
+        message = ""
+
+        if isinstance(data, dict):
+            # Collect all error messages from all fields
+            all_messages = []
+            for field, errors in data.items():
+                if isinstance(errors, list):
+                    all_messages.extend([str(e).strip().rstrip('.') for e in errors])
+                else:
+                    all_messages.append(str(errors).strip().rstrip('.'))
+            
+            # Join all unique messages with a comma and space
+            unique_messages = []
+            for msg in all_messages:
+                if msg not in unique_messages:
+                    unique_messages.append(msg)
+            
+            message = ", ".join(unique_messages)
+            if message:
+                message += "."
+        elif isinstance(data, list):
+            message = ". ".join([str(e).strip().rstrip('.') for e in data])
+            if message:
+                message += "."
+        else:
+            message = str(data).strip()
+
+        # Final cleanup for common DRF prefixes
+        prefixes_to_remove = ["Detail: ", "detail: ", "Error: ", "error: "]
+        for prefix in prefixes_to_remove:
+            if message.startswith(prefix):
+                message = message.replace(prefix, "", 1)
+                break
+
+        response.data = {
+            "status_code": response.status_code,
+            "message": message or "An error occurred."
+        }
+    else:
+        # Handle non-DRF exceptions (500 errors)
+        response = Response({
+            "status_code": 500,
+            "message": "An internal server error occurred. Please try again later."
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return response
+
 
 
 # def serializer_errors(default_errors):

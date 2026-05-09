@@ -24,6 +24,11 @@ class BloodRequest(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.PositiveIntegerField(default=1)
     
+    # Hospital/Patient info
+    patient_name = models.CharField(max_length=255, blank=True, null=True)
+    patient_details = models.TextField(blank=True, null=True)
+    hospital_location = models.TextField(blank=True, null=True)
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='MARKETPLACE')
     
@@ -31,6 +36,7 @@ class BloodRequest(BaseModel):
     blood_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     service_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    commission_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     
     # Delivery info

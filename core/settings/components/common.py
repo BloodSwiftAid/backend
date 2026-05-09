@@ -116,6 +116,7 @@ REST_FRAMEWORK = {
     # https://support.office.com/en-us/article/Excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
     "MAX_PAGE_SIZE": int(config("MAX_PAGE_SIZE", 1048574)),
     "NON_FIELD_ERRORS_KEY": "error",
+    "EXCEPTION_HANDLER": "core.utils.error_handler.custom_exception_handler",
 }
 
 
@@ -168,7 +169,7 @@ ROOT_URLCONF = "core.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -445,3 +446,6 @@ OTP_LENGTH = 6
 
 # Gemini API Settings
 GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
+
+# Frontend Settings
+FRONTEND_BASE_URL = config("FRONTEND_BASE_URL", default="http://localhost:5173")

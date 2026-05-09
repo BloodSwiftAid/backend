@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import User, Hospital, BloodBank, UserProfile
+from ..models import User, Hospital, BloodBank, UserProfile, GlobalConfig
 
 class HospitalSerializer(serializers.ModelSerializer):
     staff = serializers.SerializerMethodField()
@@ -48,6 +48,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
+        request = self.context.get('request')
+        
+        # If self-updating, we can assume setup is being done
+        if request and request.user == instance:
+            if password or validated_data:
+                instance.must_change_password = False
+        
         user = super().update(instance, validated_data)
         if password:
             user.set_password(password)
@@ -66,3 +73,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ('id', 'user', 'hospital', 'blood_bank', 'user_id', 'hospital_id', 'blood_bank_id')
+
+class GlobalConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalConfig
+        fields = '__all__'

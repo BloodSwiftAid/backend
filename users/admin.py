@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Hospital, BloodBank, UserProfile
+from .models import User, Hospital, BloodBank, UserProfile, UserOTP, GlobalConfig
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
@@ -18,7 +18,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Hospital)
 class HospitalAdmin(admin.ModelAdmin):
-    list_display = ('name', 'hospital_type', 'state', 'lga', 'has_emergency_unit', 'is_verified', 'date_created')
+    list_display = ('name', 'hospital_type', 'state', 'area', 'has_emergency_unit', 'is_verified', 'date_created')
     list_filter = ('hospital_type', 'state', 'has_emergency_unit', 'is_verified')
     search_fields = ('name', 'contact_email', 'contact_phone', 'address')
     list_editable = ('is_verified',)
@@ -26,7 +26,7 @@ class HospitalAdmin(admin.ModelAdmin):
 
 @admin.register(BloodBank)
 class BloodBankAdmin(admin.ModelAdmin):
-    list_display = ('name', 'license_number', 'state', 'lga', 'storage_capacity_liters', 'is_verified', 'date_created')
+    list_display = ('name', 'license_number', 'state', 'area', 'storage_capacity_liters', 'is_verified', 'date_created')
     list_filter = ('state', 'is_verified')
     search_fields = ('name', 'license_number', 'contact_email', 'contact_phone', 'address')
     list_editable = ('is_verified',)
@@ -45,3 +45,21 @@ class UserProfileAdmin(admin.ModelAdmin):
             return f"Blood Bank: {obj.blood_bank.name}"
         return "No Organization"
     get_organization.short_description = 'Organization'
+
+@admin.register(UserOTP)
+class UserOTPAdmin(admin.ModelAdmin):
+    list_display = ('user', 'otp', 'purpose', 'is_used', 'expiry', 'date_created')
+    list_filter = ('purpose', 'is_used', 'date_created')
+    search_fields = ('user__username', 'otp')
+    readonly_fields = ('date_created',)
+
+@admin.register(GlobalConfig)
+class GlobalConfigAdmin(admin.ModelAdmin):
+    list_display = ('commission_percentage', 'last_modified')
+    
+    def has_add_permission(self, request):
+        # Only one config allowed
+        return not GlobalConfig.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        return False

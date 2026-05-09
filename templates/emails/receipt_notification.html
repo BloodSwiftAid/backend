@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Inter', -apple-system, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .header { background: #0f172a; padding: 48px; text-align: center; color: #ffffff; }
+        .header h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.025em; }
+        .content { padding: 48px; }
+        .footer { padding: 32px; background: #f8fafc; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .info-box { background: #f1f5f9; border-radius: 16px; padding: 32px; margin: 32px 0; border: 1px solid #e2e8f0; }
+        .label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+        .value { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
+        .accent { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #ffffff;">Swift<span style="color: #ef4444;">Aid</span></h1>
+        </div>
+        <div class="content">
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 16px;">Payment <span class="accent">Receipt</span></h2>
+            <p>Your transaction has been successfully processed. Below is the breakdown of your procurement.</p>
+            
+            <div class="info-box">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span class="label">Reference</span>
+                    <span class="value" style="margin-bottom: 0;">{{ reference }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span class="label">Blood Group</span>
+                    <span class="value" style="margin-bottom: 0;">{{ blood_group }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span class="label">Quantity</span>
+                    <span class="value" style="margin-bottom: 0;">{{ quantity }} Units</span>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 12px; color: #64748b;">Asset Subtotal</span>
+                    <span style="font-size: 14px; font-weight: 600;">₦{{ blood_price }}</span>
+                </div>
+                {% if service_fee > 0 %}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 12px; color: #64748b;">Service Fees</span>
+                    <span style="font-size: 14px; font-weight: 600;">₦{{ service_fee }}</span>
+                </div>
+                {% endif %}
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 2px solid #ef4444;">
+                    <span style="font-size: 14px; font-weight: 800; text-transform: uppercase;">Total Paid</span>
+                    <span style="font-size: 20px; font-weight: 800; color: #ef4444;">₦{{ amount }}</span>
+                </div>
+            </div>
+            
+            <p style="font-size: 14px; color: #64748b;">A formal PDF copy of this receipt is attached to this email for your records.</p>
+        </div>
+        <div class="footer">
+            &copy; 2026 SwiftAid Labs. All Rights Reserved.
+        </div>
+    </div>
+</body>
+</html>

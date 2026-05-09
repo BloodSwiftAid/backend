@@ -40,8 +40,10 @@ class UserOTP(BaseModel):
 class BaseOrganization(BaseModel):
     name = models.CharField(max_length=255)
     address = models.TextField(blank=True, null=True)
+    country = models.CharField(max_length=100, default='Nigeria')
     state = models.CharField(max_length=100, blank=True, null=True)
-    lga = models.CharField(max_length=100, blank=True, null=True)
+    area = models.CharField(max_length=100, blank=True, null=True)
+    street = models.CharField(max_length=255, blank=True, null=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     
@@ -64,6 +66,7 @@ class Hospital(BaseOrganization):
 class BloodBank(BaseOrganization):
     license_number = models.CharField(max_length=100, blank=True, null=True)
     storage_capacity_liters = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=10.0) # Default 10%
 
 class UserProfile(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -90,3 +93,15 @@ class UserProfile(BaseModel):
         super().save(*args, **kwargs)
 
 
+class GlobalConfig(BaseModel):
+    commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=10.0)
+    address = models.TextField(blank=True, null=True, default="123 SwiftAid Tech Plaza, Lagos, Nigeria")
+    contact_email = models.EmailField(blank=True, null=True, default="support@swiftaid.com")
+    contact_phone = models.CharField(max_length=20, blank=True, null=True, default="+234 800 SWIFTAID")
+    
+    class Meta:
+        verbose_name = "Global Configuration"
+        verbose_name_plural = "Global Configurations"
+
+    def __str__(self):
+        return f"Global Config (Commission: {self.commission_percentage}%)"
