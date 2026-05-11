@@ -207,3 +207,19 @@ class StaffManagementViewSet(viewsets.ModelViewSet):
         staff_user.must_change_password = True
         staff_user.save()
         return Response({"message": f"Password reset successfully for {staff_user.username}."})
+
+    @action(detail=True, methods=['post'], url_path='toggle-active')
+    def toggle_active(self, request, pk=None):
+        user = self.get_object()
+        user.is_active = not user.is_active
+        user.save()
+        state = 'activated' if user.is_active else 'deactivated'
+        return Response({'message': f'User {state} successfully.', 'is_active': user.is_active})
+
+    @action(detail=True, methods=['post'], url_path='toggle-verified')
+    def toggle_verified(self, request, pk=None):
+        user = self.get_object()
+        user.is_verified = not user.is_verified
+        user.save()
+        state = 'verified' if user.is_verified else 'unverified'
+        return Response({'message': f'User {state} successfully.', 'is_verified': user.is_verified})

@@ -1,11 +1,14 @@
 from rest_framework import serializers
 from ..models import BloodRequest
 
+from users.serializers.user_serializers import HospitalSerializer, BloodBankSerializer
 from payment.serializers.payment_serializers import PaymentSerializer
 
 class BloodRequestSerializer(serializers.ModelSerializer):
     blood_group = serializers.ReadOnlyField(source='product.blood_group')
     requester_name = serializers.SerializerMethodField()
+    requester_hospital_details = HospitalSerializer(source='requester_hospital', read_only=True)
+    blood_bank_details = BloodBankSerializer(source='blood_bank', read_only=True)
     payment = PaymentSerializer(read_only=True)
     
     class Meta:

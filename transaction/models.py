@@ -17,6 +17,11 @@ class BloodRequest(BaseModel):
         ('POS', 'Direct POS Sale'),
         ('WHATSAPP', 'WhatsApp Bot'),
     )
+    PAYMENT_METHOD_CHOICES = (
+        ('TRANSFER', 'Bank Transfer'),
+        ('POS', 'POS Terminal'),
+        ('CASH', 'Cash Payment'),
+    )
     requester_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='requested_bloods')
     requester_hospital = models.ForeignKey(Hospital, on_delete=models.SET_NULL, null=True, blank=True, related_name='requested_bloods')
     
@@ -31,6 +36,7 @@ class BloodRequest(BaseModel):
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='MARKETPLACE')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='TRANSFER')
     batch_id = models.CharField(max_length=100, blank=True, null=True, help_text="Groups multiple requests in one marketplace session")
     
     # Fees & Pricing

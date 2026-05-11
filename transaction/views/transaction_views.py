@@ -119,6 +119,9 @@ class BloodRequestViewSet(viewsets.ModelViewSet):
             return Response({"message": "Only blood bank staff can perform POS sales."}, status=status.HTTP_403_FORBIDDEN)
 
         items = request.data.get('items', [])
+        payment_method = request.data.get('payment_method', 'TRANSFER').upper()
+        batch_id = str(uuid.uuid4())
+        
         if not items:
             return Response({"message": "No items provided for sale."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -133,7 +136,9 @@ class BloodRequestViewSet(viewsets.ModelViewSet):
             blood_request = serializer.save(
                 blood_bank=profile.blood_bank,
                 status='DELIVERED',
-                source='POS'
+                source='POS',
+                payment_method=payment_method,
+                batch_id=batch_id
             )
             
             # Deduct inventory
@@ -152,13 +157,13 @@ class BloodRequestViewSet(viewsets.ModelViewSet):
             total_amount += float(blood_request.total_amount)
             blood_requests.append(blood_request)
 
-        # Return the ID of the first request as the "Master" for payment initialization
-        # The payment initialization will use the total amount provided by the frontend
         return Response({
             "message": "Bulk sale created successfully.",
+            "batch_id": batch_id,
             "master_request_id": blood_requests[0].id,
             "total_amount": total_amount,
-            "item_count": len(blood_requests)
+            "item_count": len(blood_requests),
+            "payment_method": payment_method
         }, status=status.HTTP_201_CREATED)
 
 class RevenueStatsView(APIView):

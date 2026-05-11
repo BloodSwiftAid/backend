@@ -93,10 +93,14 @@ def custom_exception_handler(exc, context):
             # Collect all error messages from all fields
             all_messages = []
             for field, errors in data.items():
+                field_name = field.replace('_', ' ').capitalize()
                 if isinstance(errors, list):
-                    all_messages.extend([str(e).strip().rstrip('.') for e in errors])
+                    for e in errors:
+                        msg = str(e).strip().rstrip('.')
+                        all_messages.append(f"{field_name}: {msg}")
                 else:
-                    all_messages.append(str(errors).strip().rstrip('.'))
+                    msg = str(errors).strip().rstrip('.')
+                    all_messages.append(f"{field_name}: {msg}")
             
             # Join all unique messages with a comma and space
             unique_messages = []
