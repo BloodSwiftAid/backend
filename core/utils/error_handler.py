@@ -131,6 +131,8 @@ def custom_exception_handler(exc, context):
         }
     else:
         # Handle non-DRF exceptions (500 errors)
+        from loguru import logger
+        logger.exception("Unhandled 500 Internal Server Error:")
         response = Response({
             "status_code": 500,
             "message": "An internal server error occurred. Please try again later."
