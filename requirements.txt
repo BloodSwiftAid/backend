@@ -43,7 +43,6 @@ psycopg2-binary==2.9.12
 py-ubjson==0.16.1
 pyasn1==0.6.3
 pyasn1_modules==0.4.2
-pycairo==1.29.0
 pycparser==3.0
 pyHanko>=0.30.0
 pyhanko-certvalidator>=0.30.0
@@ -56,7 +55,6 @@ PyYAML==6.0.3
 referencing==0.37.0
 reportlab==4.5.0
 requests==2.33.1
-rlPyCairo==0.4.0
 rpds-py==0.30.0
 sentry-sdk==2.58.0
 service-identity==24.2.0
