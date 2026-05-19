@@ -287,17 +287,19 @@ CORS_ALLOW_METHODS = [
     "POST",
     "PUT",
 ]
-# CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = [
-   "https://echo-frontend-suave-lads-projects.vercel.app", # Frontend Dev
-   "https://prod.d2rhhq8y49f47w.amplifyapp.com", # Frontend Prod
-   "https://app.echo.com",  # Frontend Prod
-   "http://app.echo.com",  # Frontend Prod
-   "http://localhost:3000",  # Frontend Local
-   "https://letusecho.vercel.app",  # Frontend Local
+cors_origins_raw = config("CORS_ALLOWED_ORIGINS", default="")
+if cors_origins_raw:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()]
+else:
+    CORS_ALLOWED_ORIGINS = [
+       "https://echo-frontend-suave-lads-projects.vercel.app", # Frontend Dev
+       "https://prod.d2rhhq8y49f47w.amplifyapp.com", # Frontend Prod
+       "https://app.echo.com",  # Frontend Prod
+       "http://app.echo.com",  # Frontend Prod
+       "http://localhost:3000",  # Frontend Local
+       "https://letusecho.vercel.app",  # Frontend Local
+    ]
 
-
-]
 
 # Django Spectacular settings
 SPECTACULAR_SETTINGS = {
