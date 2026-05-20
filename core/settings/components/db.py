@@ -15,10 +15,11 @@ if ENV_MODE == 'local':
     # Use a persistent directory for the SQLite database
     DB_DIR = BASE_DIR / "database"
     DB_DIR.mkdir(parents=True, exist_ok=True)
+    DB_PATH = DB_DIR / "db.sqlite3"
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': DB_DIR / 'db.sqlite3',
+            'NAME': str(DB_PATH),
         }
     }
 else:

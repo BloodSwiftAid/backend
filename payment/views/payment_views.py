@@ -179,11 +179,21 @@ class PaymentViewSet(viewsets.ModelViewSet):
                         related_requests = [blood_request]
                     
                     for req in related_requests:
+                        # If no blood bank has been assigned yet (e.g. global marketplace request), skip pre-deduction
+                        if not req.blood_bank:
+                            continue
+
                         # Check and deduct inventory for each request in the batch
                         inventory = Inventory.objects.filter(
                             blood_bank=req.blood_bank,
                             product=req.product
                         ).select_for_update().first()
+
+                        if not inventory and req.product:
+                            inventory = Inventory.objects.filter(
+                                blood_bank=req.blood_bank,
+                                blood_type__group=req.product.blood_group
+                            ).select_for_update().first()
 
                         if not inventory or inventory.quantity < req.quantity:
                             return Response({"error": f"Insufficient inventory for {req.product.blood_group} to fulfill this request."}, status=status.HTTP_400_BAD_REQUEST)
@@ -223,10 +233,21 @@ class PaymentViewSet(viewsets.ModelViewSet):
             if paystack_res.get('status'):
                 return Response(paystack_res['data'], status=status.HTTP_200_OK)
             
-            # If initialization fails, restore inventory
-            with db_transaction.atomic():
-                inventory.quantity += blood_request.quantity
-                inventory.save()
+            # If initialization fails, restore inventory (only if it was deducted / has a blood bank)
+            if blood_request.blood_bank:
+                with db_transaction.atomic():
+                    inventory = Inventory.objects.filter(
+                        blood_bank=blood_request.blood_bank,
+                        product=blood_request.product
+                    ).select_for_update().first()
+                    if not inventory and blood_request.product:
+                        inventory = Inventory.objects.filter(
+                            blood_bank=blood_request.blood_bank,
+                            blood_type__group=blood_request.product.blood_group
+                        ).select_for_update().first()
+                    if inventory:
+                        inventory.quantity += blood_request.quantity
+                        inventory.save()
                 
             logger.error(f"Paystack initialization failed for reference {reference}: {paystack_res}")
             return Response({"error": "Could not initialize payment with gateway"}, status=status.HTTP_400_BAD_REQUEST)
@@ -447,15 +468,23 @@ class PaymentViewSet(viewsets.ModelViewSet):
                     related_requests = [blood_request]
 
                 for req in related_requests:
-                    # Restore inventory
-                    inventory = Inventory.objects.filter(
-                        blood_bank=req.blood_bank,
-                        product=req.product
-                    ).first()
-                    
-                    if inventory:
-                        inventory.quantity += req.quantity
-                        inventory.save()
+                    # Only restore if it was assigned/deducted
+                    if req.blood_bank:
+                        # Restore inventory
+                        inventory = Inventory.objects.filter(
+                            blood_bank=req.blood_bank,
+                            product=req.product
+                        ).first()
+                        
+                        if not inventory and req.product:
+                            inventory = Inventory.objects.filter(
+                                blood_bank=req.blood_bank,
+                                blood_type__group=req.product.blood_group
+                            ).first()
+                        
+                        if inventory:
+                            inventory.quantity += req.quantity
+                            inventory.save()
 
                     if req.status == 'PENDING':
                         req.status = 'CANCELLED'

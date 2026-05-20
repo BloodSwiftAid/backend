@@ -42,6 +42,7 @@ class BaseOrganization(BaseModel):
     address = models.TextField(blank=True, null=True)
     country = models.CharField(max_length=100, default='Nigeria')
     state = models.CharField(max_length=100, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
     area = models.CharField(max_length=100, blank=True, null=True)
     street = models.CharField(max_length=255, blank=True, null=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)

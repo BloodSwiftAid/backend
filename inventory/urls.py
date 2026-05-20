@@ -7,7 +7,8 @@ from .views.inventory_views import (
     InventoryViewSet, 
     DonationViewSet, 
     InventoryStatsView,
-    MarketplaceView
+    MarketplaceView,
+    MarketplaceLocationsView
 )
 
 router = DefaultRouter()
@@ -20,5 +21,7 @@ router.register(r'donations', DonationViewSet, basename='donations')
 urlpatterns = [
     path('stats/', InventoryStatsView.as_view(), name='inventory-stats'),
     path('marketplace/', MarketplaceView.as_view(), name='marketplace-list'),
+    path('marketplace/locations/', MarketplaceLocationsView.as_view(), name='marketplace-locations'),
     path('', include(router.urls)),
 ]
+

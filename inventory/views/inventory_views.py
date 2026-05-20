@@ -9,9 +9,10 @@ from ..serializers.inventory_serializers import (
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Sum
+from django.db.models import Sum, Q
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
+
 
 @extend_schema_view(
     list=extend_schema(tags=['Inventory - Blood Types']),
@@ -145,10 +146,28 @@ class MarketplaceView(APIView):
         config = GlobalConfig.objects.first()
         commission_pct = config.commission_percentage if config else 10.0
         
+        # Get query parameters for filtering
+        country = request.query_params.get('country')
+        state = request.query_params.get('state')
+        city = request.query_params.get('city')
+        
         blood_types = BloodType.objects.filter(is_active=True)
         data = []
         for bt in blood_types:
-            total_qty = Inventory.objects.filter(blood_type=bt).aggregate(Sum('quantity'))['quantity__sum'] or 0
+            inventory_qs = Inventory.objects.filter(blood_type=bt)
+            
+            # Apply location filters on the blood bank's properties
+            if country:
+                inventory_qs = inventory_qs.filter(blood_bank__country__iexact=country)
+            if state:
+                inventory_qs = inventory_qs.filter(blood_bank__state__iexact=state)
+            if city:
+                # Filter by city or area (fallback for legacy/backward-compatible records)
+                inventory_qs = inventory_qs.filter(
+                    Q(blood_bank__city__iexact=city) | Q(blood_bank__area__iexact=city)
+                )
+                
+            total_qty = inventory_qs.aggregate(Sum('quantity'))['quantity__sum'] or 0
             # Calculate price
             commission_amount = (bt.base_price * commission_pct) / 100
             total_price = bt.base_price + commission_amount
@@ -162,3 +181,26 @@ class MarketplaceView(APIView):
                 "total_price": float(total_price)
             })
         return Response(data)
+
+class MarketplaceLocationsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(tags=['Marketplace'])
+    def get(self, request):
+        from users.models import BloodBank
+        active_banks = BloodBank.objects.filter(is_active=True)
+        
+        # Unique countries, states, and cities/areas
+        countries = sorted(list(set(filter(None, active_banks.values_list('country', flat=True)))))
+        states = sorted(list(set(filter(None, active_banks.values_list('state', flat=True)))))
+        
+        cities_set = set(filter(None, active_banks.values_list('city', flat=True)))
+        areas_set = set(filter(None, active_banks.values_list('area', flat=True)))
+        cities = sorted(list(cities_set.union(areas_set)))
+        
+        return Response({
+            "countries": countries,
+            "states": states,
+            "cities": cities
+        })
+

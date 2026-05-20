@@ -31,6 +31,87 @@ class BloodRequestViewSet(viewsets.ModelViewSet):
         else:
             serializer.save(requester_user=user)
 
+    @transaction.atomic
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        old_blood_bank = instance.blood_bank
+        old_quantity = instance.quantity
+        old_product = instance.product
+        
+        # Save the update
+        updated_instance = serializer.save()
+        
+        new_blood_bank = updated_instance.blood_bank
+        new_quantity = updated_instance.quantity
+        new_product = updated_instance.product
+        
+        ACTIVE_STATES = ['APPROVED', 'DISPATCHED', 'DELIVERED']
+        
+        # We only manage inventory changes for requests that are in active/paid states
+        if updated_instance.status in ACTIVE_STATES:
+            # Case 1: Assigning a blood bank for the first time
+            if not old_blood_bank and new_blood_bank:
+                from inventory.models import Inventory
+                from rest_framework.exceptions import ValidationError
+                
+                inventory = Inventory.objects.filter(
+                    blood_bank=new_blood_bank,
+                    product=new_product
+                ).select_for_update().first()
+                
+                if not inventory and new_product:
+                    inventory = Inventory.objects.filter(
+                        blood_bank=new_blood_bank,
+                        blood_type__group=new_product.blood_group
+                    ).select_for_update().first()
+                    
+                if not inventory or inventory.quantity < new_quantity:
+                    raise ValidationError({
+                        "blood_bank": f"Insufficient inventory at {new_blood_bank.name} for {new_product.blood_group if new_product else 'this product'} (Requested: {new_quantity}, Available: {inventory.quantity if inventory else 0})."
+                    })
+                
+                inventory.quantity -= new_quantity
+                inventory.save()
+                
+            # Case 2: Reassigning from one blood bank to another, or changing quantity/product
+            elif old_blood_bank and new_blood_bank and (old_blood_bank != new_blood_bank or old_product != new_product or old_quantity != new_quantity):
+                from inventory.models import Inventory
+                from rest_framework.exceptions import ValidationError
+                
+                # 1. Restore old
+                old_inventory = Inventory.objects.filter(
+                    blood_bank=old_blood_bank,
+                    product=old_product
+                ).select_for_update().first()
+                if not old_inventory and old_product:
+                    old_inventory = Inventory.objects.filter(
+                        blood_bank=old_blood_bank,
+                        blood_type__group=old_product.blood_group
+                    ).select_for_update().first()
+                if old_inventory:
+                    old_inventory.quantity += old_quantity
+                    old_inventory.save()
+                
+                # 2. Deduct new
+                new_inventory = Inventory.objects.filter(
+                    blood_bank=new_blood_bank,
+                    product=new_product
+                ).select_for_update().first()
+                if not new_inventory and new_product:
+                    new_inventory = Inventory.objects.filter(
+                        blood_bank=new_blood_bank,
+                        blood_type__group=new_product.blood_group
+                    ).select_for_update().first()
+                
+                if not new_inventory or new_inventory.quantity < new_quantity:
+                    # Rollback restoration by raising error
+                    raise ValidationError({
+                        "blood_bank": f"Insufficient inventory at {new_blood_bank.name} for {new_product.blood_group if new_product else 'this product'} (Requested: {new_quantity}, Available: {new_inventory.quantity if new_inventory else 0})."
+                    })
+                
+                new_inventory.quantity -= new_quantity
+                new_inventory.save()
+
     def get_queryset(self):
         user = self.request.user
         profile = getattr(user, 'profile', None)
@@ -89,6 +170,12 @@ class BloodRequestViewSet(viewsets.ModelViewSet):
             product=blood_request.product
         ).first()
 
+        if not inventory and blood_request.product:
+            inventory = Inventory.objects.filter(
+                blood_bank=blood_request.blood_bank,
+                blood_type__group=blood_request.product.blood_group
+            ).first()
+
         if not inventory or inventory.quantity < blood_request.quantity:
             return Response({"message": "Insufficient inventory to fulfill this request."}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -146,6 +233,12 @@ class BloodRequestViewSet(viewsets.ModelViewSet):
                 blood_bank=profile.blood_bank,
                 product=blood_request.product
             ).first()
+
+            if not inventory and blood_request.product:
+                inventory = Inventory.objects.filter(
+                    blood_bank=profile.blood_bank,
+                    blood_type__group=blood_request.product.blood_group
+                ).first()
 
             if not inventory or inventory.quantity < blood_request.quantity:
                 transaction.set_rollback(True)

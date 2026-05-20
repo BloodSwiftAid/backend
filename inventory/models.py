@@ -40,6 +40,11 @@ class Inventory(BaseModel):
         return f"{bank} - {btype} / {product} - qty:{self.quantity}"
 
     def save(self, *args, **kwargs):
+        if not self.product and self.blood_type:
+            # Auto-resolve product from the blood type's group
+            product = Product.objects.filter(blood_group=self.blood_type.group).first()
+            if product:
+                self.product = product
         super().save(*args, **kwargs)
 
 class Donation(BaseModel):
