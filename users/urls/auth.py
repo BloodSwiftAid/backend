@@ -6,6 +6,7 @@ from ..views.auth_views import (
     LogoutView,
     MyTokenObtainPairView
 )
+from ..views.public_views import RegisterFacilityView, RegisterDonorView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -15,4 +16,6 @@ urlpatterns = [
     path('otp/verify/', ResetPasswordView.as_view(), name='password_reset_confirm'),
     path('password/change/', ChangePasswordView.as_view(), name='password_change'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('register-facility/', RegisterFacilityView.as_view(), name='register_facility'),
+    path('register-donor/', RegisterDonorView.as_view(), name='register_donor'),
 ]

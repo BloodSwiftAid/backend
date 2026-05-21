@@ -68,6 +68,7 @@ class Hospital(BaseOrganization):
 class BloodBank(BaseOrganization):
     license_number = models.CharField(max_length=100, blank=True, null=True)
     storage_capacity_liters = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    logistics_status = models.TextField(blank=True, null=True)
     commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=10.0) # Default 10%
     wallet_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
 
@@ -135,3 +136,18 @@ class VerificationLog(BaseModel):
         target = self.hospital or self.blood_bank
         admin_name = self.admin.username if self.admin else "System"
         return f"{admin_name} {self.action} {target.name if target else 'N/A'}"
+
+class PotentialDonor(BaseModel):
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20)
+    blood_group = models.CharField(max_length=10, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    country = models.CharField(max_length=100, default='Nigeria')
+    state = models.CharField(max_length=100, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    lga = models.CharField(max_length=100, blank=True, null=True)
+    is_contacted = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.full_name
