@@ -41,10 +41,10 @@ class UserOTP(BaseModel):
 class BaseOrganization(BaseModel):
     name = models.CharField(max_length=255)
     address = models.TextField(blank=True, null=True)
-    country = models.CharField(max_length=100, default='Nigeria')
-    state = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100, default='Nigeria', blank=False, null=False)
+    state = models.CharField(max_length=100, blank=False, null=False, default='Not Provided')
     city = models.CharField(max_length=100, blank=True, null=True)
-    area = models.CharField(max_length=100, blank=True, null=True)
+    area = models.CharField(max_length=100, blank=False, null=False, default='Not Provided')
     street = models.CharField(max_length=255, blank=True, null=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
@@ -68,7 +68,7 @@ class Hospital(BaseOrganization):
     has_emergency_unit = models.BooleanField(default=True)
 
 class BloodBank(BaseOrganization):
-    license_number = models.CharField(max_length=100, blank=True, null=True)
+    license_number = models.CharField(max_length=100, blank=False, null=False, default='Not Provided')
     storage_capacity_liters = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     logistics_status = models.TextField(blank=True, null=True)
     commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=10.0) # Default 10%

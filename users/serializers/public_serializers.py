@@ -23,16 +23,30 @@ class FacilityRegistrationSerializer(serializers.Serializer):
     admin_phone = serializers.CharField(max_length=20)
     
     # Address Details
-    operational_address = serializers.CharField(required=False, allow_blank=True)
-    country = serializers.CharField(default='Nigeria')
-    state = serializers.CharField(max_length=100)
-    lga = serializers.CharField(max_length=100)
+    operational_address = serializers.CharField(required=True, allow_blank=False)
+    country = serializers.CharField(default='Nigeria', required=True, allow_blank=False)
+    state = serializers.CharField(max_length=100, required=True, allow_blank=False)
+    lga = serializers.CharField(max_length=100, required=True, allow_blank=False)
     city = serializers.CharField(max_length=100)
 
     def validate_admin_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value
+
+    def validate(self, attrs):
+        facility_type = attrs.get('facility_type')
+        if facility_type == 'bloodbank':
+            if not attrs.get('license_number') or attrs.get('license_number').strip() == '':
+                raise serializers.ValidationError({"license_number": "License number is required for Blood Banks."})
+        
+        # Ensure mandatory fields are present
+        required_fields = ['state', 'lga', 'country', 'admin_name', 'admin_email', 'admin_phone', 'operational_address', 'facility_name']
+        for field in required_fields:
+            if not attrs.get(field):
+                raise serializers.ValidationError({field: f"{field.replace('_', ' ').title()} is strictly required."})
+        
+        return attrs
 
     def create(self, validated_data):
         facility_type = validated_data.pop('facility_type')
