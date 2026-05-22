@@ -13,6 +13,7 @@ class User(AbstractUser, BaseModel):
         ('INTERNAL_ADMIN', 'Internal Admin'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PUBLIC_USER')
+    email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
     
@@ -57,6 +58,7 @@ class BaseOrganization(BaseModel):
 
     class Meta:
         abstract = True
+        unique_together = ('name', 'country', 'state', 'city')
 
     def __str__(self):
         return self.name
