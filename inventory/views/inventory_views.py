@@ -71,7 +71,11 @@ class InventoryViewSet(viewsets.ModelViewSet):
         if profile and profile.blood_bank:
             return Inventory.objects.filter(blood_bank=profile.blood_bank)
         elif user.role == 'INTERNAL_ADMIN':
-            return Inventory.objects.all()
+            queryset = Inventory.objects.all()
+            blood_bank_id = self.request.query_params.get('blood_bank_id')
+            if blood_bank_id:
+                queryset = queryset.filter(blood_bank_id=blood_bank_id)
+            return queryset
         return Inventory.objects.none()
 
     def perform_create(self, serializer):
@@ -209,3 +213,37 @@ class MarketplaceLocationsView(APIView):
             "cities": cities
         })
 
+class BloodTypeBreakdownView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(tags=['Inventory - Stats'])
+    def get(self, request):
+        user = request.user
+        if user.role != 'INTERNAL_ADMIN':
+            return Response({"error": "Unauthorized. Internal Admin only."}, status=403)
+            
+        blood_group = request.query_params.get('blood_group')
+        if not blood_group:
+            return Response({"error": "blood_group query parameter is required"}, status=400)
+            
+        inventory_items = Inventory.objects.filter(
+            blood_type__group=blood_group, 
+            quantity__gt=0,
+            blood_bank__is_active=True
+        ).select_related('blood_bank')
+        
+        data = []
+        for item in inventory_items:
+            if item.blood_bank:
+                data.append({
+                    "blood_bank_id": item.blood_bank.id,
+                    "blood_bank_name": item.blood_bank.name,
+                    "quantity": item.quantity,
+                    "state": item.blood_bank.state,
+                    "city": item.blood_bank.city,
+                    "lga": item.blood_bank.area,
+                    "country": item.blood_bank.country,
+                })
+                
+        data.sort(key=lambda x: x['quantity'], reverse=True)
+        return Response(data)
