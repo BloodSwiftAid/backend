@@ -7,13 +7,16 @@ from django.contrib.auth import get_user_model
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email'] = serializers.EmailField()
+        self.fields['email'] = serializers.EmailField(required=False)
         if 'username' in self.fields:
-            del self.fields['username']
+            self.fields['username'].required = False
 
     def validate(self, attrs):
-        login_id = attrs.get("email")
+        login_id = attrs.get("email") or attrs.get("username")
         password = attrs.get("password")
+        
+        if not login_id:
+            raise serializers.ValidationError({"message": "Email or Username is required."})
 
         # Try standard authentication (username)
         user = authenticate(username=login_id, password=password)
