@@ -24,7 +24,7 @@ class FacilityRegistrationSerializer(serializers.Serializer):
     
     # Address Details
     operational_address = serializers.CharField(required=True, allow_blank=False)
-    country = serializers.CharField(default='Nigeria', required=True, allow_blank=False)
+    country = serializers.CharField(default='Nigeria', allow_blank=False)
     state = serializers.CharField(max_length=100, required=True, allow_blank=False)
     lga = serializers.CharField(max_length=100, required=True, allow_blank=False)
     city = serializers.CharField(max_length=100)

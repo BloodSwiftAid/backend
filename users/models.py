@@ -41,7 +41,7 @@ class UserOTP(BaseModel):
 class BaseOrganization(BaseModel):
     name = models.CharField(max_length=255)
     address = models.TextField(blank=True, null=True)
-    country = models.CharField(max_length=100, default='Nigeria', blank=False, null=False)
+    country = models.CharField(max_length=100, default='Nigeria', blank=True, null=False)
     state = models.CharField(max_length=100, blank=False, null=False, default='Not Provided')
     city = models.CharField(max_length=100, blank=True, null=True)
     area = models.CharField(max_length=100, blank=False, null=False, default='Not Provided')
