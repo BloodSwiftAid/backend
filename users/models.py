@@ -50,6 +50,7 @@ class BaseOrganization(BaseModel):
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     
     # Contact & KYC
+    contact_name = models.CharField(max_length=255, blank=True, null=True)
     contact_email = models.EmailField(blank=True, null=True)
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
     kyc_document = models.FileField(upload_to='kyc_docs/', blank=True, null=True)
