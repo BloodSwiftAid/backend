@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
 from ..models import BloodType, ProductCategory, Product, Inventory, Donation
 from ..serializers.inventory_serializers import (
     BloodTypeSerializer,
@@ -85,6 +86,48 @@ class InventoryViewSet(viewsets.ModelViewSet):
             serializer.save(blood_bank=profile.blood_bank)
         else:
             serializer.save()
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request):
+        user = request.user
+        profile = getattr(user, 'profile', None)
+        
+        if not (profile and profile.blood_bank):
+            return Response({"error": "Only blood banks can bulk update inventory"}, status=403)
+            
+        items = request.data.get('items', [])
+        if not items:
+            return Response({"error": "No items provided"}, status=400)
+            
+        created_items = []
+        for item in items:
+            blood_group = item.get('blood_group')
+            quantity = item.get('quantity', 0)
+            
+            if not blood_group or not quantity:
+                continue
+                
+            blood_type = BloodType.objects.filter(group=blood_group).first()
+            if not blood_type:
+                continue
+                
+            inventory, created = Inventory.objects.get_or_create(
+                blood_bank=profile.blood_bank,
+                blood_type=blood_type,
+                defaults={'price': blood_type.base_price, 'quantity': quantity}
+            )
+            
+            if not created:
+                inventory.quantity += int(quantity)
+                inventory.save()
+                
+            created_items.append({
+                "id": inventory.id,
+                "blood_group": blood_group,
+                "quantity": inventory.quantity
+            })
+            
+        return Response(created_items, status=201)
 
 @extend_schema_view(
     list=extend_schema(tags=['Inventory - Donations']),
