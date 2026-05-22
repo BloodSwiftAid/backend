@@ -5,7 +5,7 @@
       "src": "core/wsgi.py",
       "use": "@vercel/python",
       "config": {
-        "includeFiles": "templates/**"
+        "includeFiles": "templates/**/*"
       }
     }
   ],
