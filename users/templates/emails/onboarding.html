@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Welcome to SwiftAid</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+    <div style="max-w-xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h2 style="color: #333;">Welcome to SwiftAid!</h2>
+        <p>Hello,</p>
+        <p>Your facility has been registered on SwiftAid. You can now access your administrative portal.</p>
+        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Email (Username):</strong> {{ email }}</p>
+            <p style="margin: 5px 0;"><strong>Temporary Password:</strong> {{ temporary_password }}</p>
+        </div>
+        <p>Please log in to your portal using the link below:</p>
+        <p><a href="{{ portal_url }}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Access Portal</a></p>
+        <p style="margin-top: 30px; font-size: 12px; color: #777;">
+            If you did not request this, please contact support immediately.
+        </p>
+    </div>
+</body>
+</html>
