@@ -5,8 +5,14 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'] = serializers.EmailField()
+        if 'username' in self.fields:
+            del self.fields['username']
+
     def validate(self, attrs):
-        login_id = attrs.get("username")
+        login_id = attrs.get("email")
         password = attrs.get("password")
 
         # Try standard authentication (username)
