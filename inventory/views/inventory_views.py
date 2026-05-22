@@ -125,10 +125,15 @@ class InventoryStatsView(APIView):
     def get(self, request):
         user = request.user
         profile = getattr(user, 'profile', None)
-        if not (profile and profile.blood_bank):
+        
+        if profile and profile.blood_bank:
+            stats = Inventory.objects.filter(blood_bank=profile.blood_bank)
+        elif user.role == 'INTERNAL_ADMIN':
+            stats = Inventory.objects.all()
+        else:
             return Response({"error": "Blood bank context required"}, status=400)
 
-        stats = Inventory.objects.filter(blood_bank=profile.blood_bank).values(
+        stats = stats.values(
             'blood_type__group'
         ).annotate(
             total_quantity=Sum('quantity')
