@@ -6,8 +6,7 @@ from django.conf import settings
 
 SENTRY_DSN = config("SENTRY_DSN")
 # from google.cloud.logging.handlers import CloudLoggingHandler
-ENV_ENUM = settings.ENV_ENUM
-
+# ENV_ENUM = settings.ENV_ENUM
 # if settings.ENV != ENV_ENUM.LOCAL:
 #     sentry_sdk.init(
 #         dsn=SENTRY_DSN,

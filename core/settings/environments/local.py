@@ -6,7 +6,7 @@ from pathlib import Path
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DB_DIR = BASE_DIR / "database"
 DB_DIR.mkdir(parents=True, exist_ok=True)
 

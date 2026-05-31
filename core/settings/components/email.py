@@ -1,11 +1,12 @@
 from decouple import config
 
-
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = config("SMTP_HOST")
-EMAIL_PORT = config("SMTP_PORT")
-EMAIL_HOST_USER = config("SMTP_USERNAME")
-EMAIL_HOST_PASSWORD = config("SMTP_PASSWORD")
-EMAIL_FROM = config("EMAIL_FROM", "noreply@letusecho.com")
+# Using Resend's SMTP relay
+EMAIL_HOST = "smtp.resend.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "resend"
+EMAIL_HOST_PASSWORD = config("RESEND_API_KEY")
+
+EMAIL_FROM = config("DEFAULT_FROM_EMAIL", "NeoEvent <no-reply@swiftaid.co>")

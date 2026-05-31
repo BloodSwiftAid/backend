@@ -17,7 +17,7 @@ import datetime
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -446,9 +446,9 @@ MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024
 OTP_EXPIRY_MINUTES = 10
 OTP_LENGTH = 6
 
-
-# Gemini API Settings
-GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
-
 # Frontend Settings
 FRONTEND_BASE_URL = config("FRONTEND_BASE_URL", default="http://localhost:3000")
+
+# Email Settings (Resend)
+RESEND_API_KEY = config("RESEND_API_KEY", default="")
+EMAIL_FROM = config("EMAIL_FROM", default="SwiftAid <onboarding@swiftaid.com>")

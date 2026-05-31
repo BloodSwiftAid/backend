@@ -67,14 +67,19 @@ class UserViewSet(viewsets.ModelViewSet):
         
         # If internal admin creates a facility admin, send onboarding email
         if user.role in ['BLOODBANK_ADMIN', 'HOSPITAL_ADMIN']:
+            facility_type = 'blood_bank' if user.role == 'BLOODBANK_ADMIN' else 'hospital'
             send_templated_email(
                 recipient=user.email,
                 subject="Welcome to the Network - SwiftAid Onboarding",
-                template_name="onboarding.html",
+                template_name="new_user.html",
                 context={
                     "email": user.email,
                     "temporary_password": raw_password or "Set during onboarding",
-                    "portal_url": settings.FRONTEND_BASE_URL
+                    "portal_url": settings.FRONTEND_BASE_URL,
+                    "facility_name": "SwiftAid",
+                    "facility_type": facility_type,
+                    "inviter_name": "SwiftAid Team",
+                    "role": "ADMIN",
                 }
             )
 
@@ -200,15 +205,19 @@ class StaffManagementViewSet(viewsets.ModelViewSet):
             UserProfile.objects.create(user=staff_user, hospital=admin_profile.hospital)
             facility_name = admin_profile.hospital.name
         
+        facility_type = 'blood_bank' if user.role == 'BLOODBANK_ADMIN' else 'hospital'
         send_templated_email(
             recipient=staff_user.email,
             subject=f"Access Granted - {facility_name}",
             template_name="new_user.html",
             context={
                 "facility_name": facility_name,
+                "facility_type": facility_type,
                 "email": staff_user.email,
                 "temporary_password": raw_password or "Set during onboarding",
-                "portal_url": settings.FRONTEND_BASE_URL
+                "portal_url": settings.FRONTEND_BASE_URL,
+                "inviter_name": user.get_full_name() or user.username,
+                "role": "STAFF",
             }
         )
         

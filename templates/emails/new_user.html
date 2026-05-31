@@ -1,48 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You've Been Invited — SwiftAid</title>
     <style>
-        body { font-family: 'Inter', -apple-system, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background-color: #f8fafc; }
-        .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .header { background: #0f172a; padding: 48px; text-align: center; color: #ffffff; }
-        .header h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.025em; }
-        .content { padding: 48px; }
-        .footer { padding: 32px; background: #f8fafc; text-align: center; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-        .creds-box { background: #f1f5f9; border-radius: 16px; padding: 32px; margin: 32px 0; border: 1px solid #e2e8f0; }
-        .label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
-        .value { font-size: 18px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0f172a; margin-bottom: 16px; word-break: break-all; }
-        .btn { display: inline-block; background: #ef4444; color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; margin-top: 24px; }
-        .accent { color: #ef4444; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #1a1a1a; background-color: #f1f5f9; padding: 40px 16px; }
+        .wrapper { max-width: 600px; margin: 0 auto; }
+        .card { background: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 48px 40px; text-align: center; }
+        .logo { font-size: 30px; font-weight: 800; color: #ffffff; letter-spacing: -0.03em; }
+        .logo span { color: #ef4444; }
+        .badge { display: inline-block; margin-top: 16px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; padding: 6px 14px; border-radius: 999px; }
+        .content { padding: 48px 40px; }
+        .content h2 { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
+        .inviter-note { background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 14px; color: #166534; }
+        .content p { font-size: 15px; color: #475569; margin-bottom: 16px; }
+        .creds-box { background: #f8fafc; border-radius: 16px; padding: 32px; margin: 28px 0; border: 1px solid #e2e8f0; }
+        .field { margin-bottom: 20px; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px; }
+        .field-value { font-size: 16px; font-weight: 700; color: #0f172a; word-break: break-all; }
+        .field-value.mono { font-family: 'Courier New', monospace; font-size: 18px; color: #ef4444; background: #fff1f1; padding: 8px 12px; border-radius: 8px; display: inline-block; }
+        .btn-wrap { margin-top: 32px; }
+        .btn { display: inline-block; background: #ef4444; color: #ffffff; padding: 16px 36px; border-radius: 12px; text-decoration: none; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 14px; }
+        .note { font-size: 13px; color: #94a3b8; margin-top: 20px; }
+        .note strong { color: #64748b; }
+        .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 40px; text-align: center; }
+        .footer p { font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #ffffff;">Swift<span style="color: #ef4444;">Aid</span></h1>
-        </div>
-        <div class="content">
-            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 16px;">Access <span class="accent">Granted</span></h2>
-            <p>You have been added as a staff member for <strong>{{ facility_name }}</strong>. You now have access to the SwiftAid administrative dashboard associated with your facility.</p>
-            
-            <div class="creds-box">
-                <div class="label">Organization</div>
-                <div class="value">{{ facility_name }}</div>
-                
-                <div class="label">Email Address</div>
-                <div class="value">{{ email }}</div>
-                
-                <div class="label">Temporary Password</div>
-                <div class="value">{{ temporary_password }}</div>
+    <div class="wrapper">
+        <div class="card">
+            <div class="header">
+                <div class="logo">Swift<span>Aid</span></div>
+                <div class="badge">
+                    {% if facility_type == 'blood_bank' %}Blood Bank Access
+                    {% elif facility_type == 'admin' %}Admin Access
+                    {% else %}Hospital Access{% endif %}
+                </div>
             </div>
-            
-            <p style="font-size: 14px; color: #64748b;"><strong>Protocol:</strong> Please login and update your password immediately to secure your account access.</p>
-            
-            <a href="{{ portal_url }}" class="btn">Access Dashboard</a>
-        </div>
-        <div class="footer">
-            &copy; 2026 SwiftAid Labs. All Rights Reserved.
+            <div class="content">
+                <h2>You've been invited to SwiftAid</h2>
+
+                {% if inviter_name %}
+                <div class="inviter-note">
+                    &#x1F44B; <strong>{{ inviter_name }}</strong> has invited you to join <strong>{{ facility_name }}</strong> on the SwiftAid platform.
+                </div>
+                {% else %}
+                <div class="inviter-note">
+                    You have been added as a member of <strong>{{ facility_name }}</strong> on the SwiftAid platform.
+                </div>
+                {% endif %}
+
+                <p>Your account is ready. Use the credentials below to log in and set up your password. Keep these details secure and do not share them.</p>
+
+                <div class="creds-box">
+                    <div class="field">
+                        <div class="field-label">Organization</div>
+                        <div class="field-value">{{ facility_name }}</div>
+                    </div>
+                    {% if role %}
+                    <div class="field">
+                        <div class="field-label">Role</div>
+                        <div class="field-value">{{ role }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="field">
+                        <div class="field-label">Email Address</div>
+                        <div class="field-value">{{ email }}</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Temporary Password</div>
+                        <div class="field-value mono">{{ temporary_password }}</div>
+                    </div>
+                </div>
+
+                <div class="btn-wrap">
+                    <a href="{{ portal_url }}" class="btn">Access Dashboard</a>
+                </div>
+
+                <p class="note">
+                    <strong>Important:</strong> Please change your password immediately after your first login to keep your account secure.
+                </p>
+            </div>
+            <div class="footer">
+                <p>&copy; 2026 SwiftAid Labs &mdash; All Rights Reserved</p>
+            </div>
         </div>
     </div>
 </body>
