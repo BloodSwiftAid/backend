@@ -8,7 +8,8 @@ from ..serializers.auth_serializers import (
     RequestOTPSerializer, 
     ResetPasswordSerializer, 
     ChangePasswordSerializer,
-    MyTokenObtainPairSerializer
+    MyTokenObtainPairSerializer,
+    VerifyAccountSerializer
 )
 
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -31,17 +32,9 @@ class RequestPasswordResetOTPView(APIView):
             otp_obj = create_user_otp(user, purpose='PASSWORD_RESET')
             
             # Send templated email
-            from core.mail import send_templated_email
-            from django.conf import settings
+            from core.mail import send_password_reset_email
             
-            send_templated_email(
-                recipient=user.email,
-                subject="Password Reset - SwiftAid Authorization Code",
-                template_name="forgot_password.html",
-                context={
-                    "reset_code": otp_obj.otp
-                }
-            )
+            send_password_reset_email(user.email, otp_obj.otp)
             
             return Response({"message": "OTP sent to your email."}, status=status.HTTP_200_OK)
         
@@ -65,6 +58,26 @@ class ResetPasswordView(APIView):
             user.set_password(new_password)
             user.save()
             return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
+        
+        from rest_framework.exceptions import ValidationError
+        raise ValidationError("Invalid or expired OTP.")
+
+class VerifyAccountView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    @extend_schema(request=VerifyAccountSerializer, tags=['Auth'])
+    def post(self, request):
+        serializer = VerifyAccountSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        otp = serializer.validated_data['otp']
+        
+        user = User.objects.filter(email=email).first()
+        if user and verify_otp(user, otp, purpose='VERIFICATION'):
+            user.is_verified = True
+            user.save()
+            return Response({"message": "Account verified successfully."}, status=status.HTTP_200_OK)
         
         from rest_framework.exceptions import ValidationError
         raise ValidationError("Invalid or expired OTP.")

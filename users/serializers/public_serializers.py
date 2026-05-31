@@ -99,6 +99,13 @@ class FacilityRegistrationSerializer(serializers.Serializer):
                 )
                 UserProfile.objects.create(user=user, blood_bank=facility)
 
+            # 4. Generate OTP and send verification email
+            from ..services.otp_service import create_user_otp
+            from core.mail import send_verification_email
+            
+            otp_obj = create_user_otp(user, purpose='VERIFICATION')
+            send_verification_email(user.email, otp_obj.otp)
+
         return facility
 
 

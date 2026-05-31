@@ -41,7 +41,7 @@ class TransactionViewsTest(APITestCase):
             'patient_name': 'John Doe',
             'urgency': 'NORMAL'
         }
-        response = self.client.post('/transactions/requests/', data, format='json')
+        response = self.client.post('/api/v1/transaction/requests/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(BloodRequest.objects.count(), 1)
         req = BloodRequest.objects.first()
@@ -58,13 +58,13 @@ class TransactionViewsTest(APITestCase):
             status='PENDING'
         )
         
-        self.client.force_authenticate(user=self.bb_admin)
+        self.client.force_authenticate(user=self.internal_admin)
         data = {
             'blood_bank': self.bb.id,
             'status': 'APPROVED'
         }
         # Assuming updating the blood bank and status triggers inventory deduction
-        response = self.client.patch(f'/transactions/requests/{req.id}/', data, format='json')
+        response = self.client.patch(f'/api/v1/transaction/requests/{req.id}/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         self.inventory.refresh_from_db()
@@ -82,7 +82,7 @@ class TransactionViewsTest(APITestCase):
         )
         
         self.client.force_authenticate(user=self.bb_admin)
-        response = self.client.post(f'/transactions/requests/{req.id}/approve/')
+        response = self.client.post(f'/api/v1/transaction/requests/{req.id}/approve/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         self.inventory.refresh_from_db()
@@ -102,7 +102,7 @@ class TransactionViewsTest(APITestCase):
         )
         
         self.client.force_authenticate(user=self.bb_admin)
-        response = self.client.post(f'/transactions/requests/{req.id}/reject/')
+        response = self.client.post(f'/api/v1/transaction/requests/{req.id}/reject/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         req.refresh_from_db()
@@ -128,7 +128,7 @@ class TransactionViewsTest(APITestCase):
                 }
             ]
         }
-        response = self.client.post('/transactions/requests/bulk-create/', data, format='json')
+        response = self.client.post('/api/v1/transaction/requests/bulk-create/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(BloodRequest.objects.count(), 2)
 
@@ -146,7 +146,7 @@ class TransactionViewsTest(APITestCase):
                 }
             ]
         }
-        response = self.client.post('/transactions/requests/bulk-pos-sale/', data, format='json')
+        response = self.client.post('/api/v1/transaction/requests/bulk-pos-sale/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(BloodRequest.objects.count(), 1)
         
@@ -171,7 +171,7 @@ class TransactionViewsTest(APITestCase):
         )
         
         self.client.force_authenticate(user=self.bb_admin)
-        response = self.client.get('/transactions/revenue/')
+        response = self.client.get('/api/v1/transaction/revenue-stats/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['total_revenue'], 100)
         self.assertEqual(response.data['total_profit'], 10)
@@ -187,6 +187,6 @@ class TransactionViewsTest(APITestCase):
         )
         
         self.client.force_authenticate(user=self.internal_admin)
-        response = self.client.get('/transactions/live-activity/')
+        response = self.client.get('/api/v1/transaction/live-activity/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(len(response.data) > 0)

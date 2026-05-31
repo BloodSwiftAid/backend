@@ -64,6 +64,10 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 class RequestOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
+class VerifyAccountSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=6)
